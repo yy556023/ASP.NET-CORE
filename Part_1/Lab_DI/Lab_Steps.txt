@@ -1,0 +1,149 @@
+Lab: 使用 ASP.NET Core 內建的 Dependency Injection 功能
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_DI <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  建立資料模型與資料內容類別
+
+
+2.1 滑鼠右鍵點按 Lab_DI 專案 | 加入 | 新增資料夾
+    資料夾名稱: Services
+
+
+2.2 滑鼠右鍵點按 Services 資料夾 | 加入 | 類別
+    名稱: SystemDateTime
+    <新增>
+
+
+2.3 SystemDateTime.cs 的檔案內容:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Lab_DI.Services {
+
+    public interface IDateTime {
+        DateTime Now { get; }
+    }
+
+    public class SystemDateTime : IDateTime {
+        DateTime _currentTime = DateTime.Now;
+        public DateTime Now {
+            get { return _currentTime; }
+        }
+    }
+
+}
+
+
+
+
+3.  註冊登記服務
+
+
+3.1 開啟 Startup.cs
+
+
+3.2 加入下列 using 參考:
+    using Lab_DI.Services;
+
+
+3.3 針對 ConfigureServices()，改成:
+        public void ConfigureServices(IServiceCollection services) {
+            services.AddSingleton<IDateTime, SystemDateTime>();
+            services.AddControllersWithViews();
+        }
+
+
+
+
+4.  使用自動注入的服務
+
+
+4.1 開啟 Controllers 資料夾內的 HomeController.cs
+
+
+4.2 加入下列 using 參考:
+    using Lab_DI.Services;
+
+
+4.3 針對 HomeController class 宣告一個私有變數:
+    private IDateTime _dateTime;
+
+
+4.4 將建構函式改成:
+        public HomeController(ILogger<HomeController> logger, IDateTime dateTime) {
+            _logger = logger;
+            _dateTime = dateTime;
+        }
+
+
+4.5 修改 Index()，如下:
+        public IActionResult Index() {
+            ViewData["now"] = _dateTime.Now;
+            return View();
+        }
+
+
+4.6 滑鼠右鍵點按程式編輯器中的 Index() | 移至檢視
+
+
+4.7 在 Index.cshtml，在 Welcome 之後，加入下列 Razor 語句:
+    <p>Current Time: @ViewData["now"] </p>
+
+
+4.8 Ctrl + F5 執行
+
+
+
+
+5.  體會一下 Service 物件的數量與生命週期
+
+
+5.1 Ctrl + F5 執行 Web 應用程式
+
+
+5.2 請複製貼上網址到另一個瀏覽器頁籤(或另一個瀏覽器)，
+    觀察它們顯示的時間是否相同? 相同
+
+
+5.3 檢視一下 Startup.cs 中的寫法:
+    services.AddSingleton<IDateTime, SystemDateTime>();
+
+
+5.4 將上述程式，改成:
+    services.AddScoped<IDateTime, SystemDateTime>();
+
+
+5.5 Ctrl + F5 執行 Web 應用程式
+
+
+5.6 請複製貼上網址到另一個瀏覽器頁籤(或另一個瀏覽器)，
+    觀察它們顯示的時間是否相同? 都不一樣
+
+
+5.7 請問 AddSingleton() 與 AddScoped() 
+    它們建立的物件數量與生命週期，各有何不同?
+

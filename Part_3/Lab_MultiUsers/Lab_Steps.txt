@@ -1,0 +1,401 @@
+Lab: 多人共用衝突調解
+
+
+
+
+<Note>
+如果你已經進行過 Lab_LINQ 的練習，
+LabDb資料庫已準備好了，
+請跳過步驟一，直接進行步驟二
+
+
+1.  建立資料庫
+
+
+1.1 啟動 SQL Server Management Studio
+
+
+1.2 連線到 .\SQLExpress，
+
+
+1.3 新增查詢視窗，貼入並執行下列 SQL 敘述:
+
+CREATE DATABASE LabDb
+GO
+
+USE LabDb
+GO
+
+CREATE TABLE Category (
+  CategoryId int NOT NULL PRIMARY KEY,
+  CategoryName nvarchar(30)
+)
+GO
+
+CREATE TABLE Products (
+  ProductId int identity NOT NULL PRIMARY KEY,
+  CategoryId int NOT NULL,
+  ProductName nvarchar(30),
+  Price money,
+  UnitsInStock int
+)
+GO
+
+alter table Products
+  add constraint FK_Category_Products
+    foreign key (CategoryId) references Category(CategoryId)
+go
+
+insert into Category values (1, 'Camera');
+insert into Category values (2, 'Lens');
+go
+
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (1, 'Canon R5', 119000, 5);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (1, 'Canon R6', 76900, 100);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'Canon RF 35mm F1.8', 14900, 2);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'CANON RF 70-200mm f/2.8L', 76900, 3);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'Canon RF 100-500mm F4.5-7.1L', 82900, 1);
+go
+
+select * from Category;
+select * from Products;
+
+
+
+
+2.  建立新專案
+
+2.1 啟動 Visual Studio
+
+2.2 點按<建立新的專案>選項
+
+2.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+2.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Conroller) <下一步>
+
+2.5 專案名稱: Lab_MultiUsers <下一步>
+
+2.6 目標Framework: .NET 5
+    <建立>
+
+
+
+
+3.  建立資料模型與資料內容類別
+
+
+3.1 工具 | NuGet 套件管理員 | 套件管理器主控台
+    依序輸入下列指令:
+
+Install-Package Microsoft.EntityFrameworkCore.Tools
+Install-package Microsoft.EntityFrameworkCore.SqlServer
+
+
+3.2 繼續在套件管理器主控台輸入下列指令:
+
+Scaffold-DbContext "Server=.\sqlexpress;Database=LabDb;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+3.3 檢視 Models 資料夾多出來的三個檔案，
+    特別是物件的單複數型
+    以及 Category 與 Products 兩個類別的關聯關係
+
+
+3.4 開啟 LabDbContext.cs，將 OnConfiguring() 整個設為註解或刪除
+
+
+3.5 開啟 appSettings.json，加入 ConnectionStrings 屬性
+    "ConnectionStrings": {
+      "LabDbContext": "Server=.\\sqlexpress;Database=LabDb;Integrated Security=True;"
+    }
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+    完成後的 appSettings.json:
+
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      },
+      "ConnectionStrings": {
+        "LabDbContext": "Server=.\\sqlexpress;Database=LabDb;Integrated Security=True;"
+      },
+      "AllowedHosts": "*"
+    }
+
+
+3.6 開啟 Startup.cs，加入 using 參照:
+    using Microsoft.EntityFrameworkCore;
+    using Lab_MultiUsers.Models;
+
+
+3.7 一樣是Startup.cs，找到 ConfigureServices()，
+    將下列程式加到 ConfigureServices() 的一開頭:
+
+    services.AddDbContext<LabDbContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("LabDbContext")));
+
+
+3.9 建置 | 重建方案
+
+
+
+
+4.  簡易實作購買流程
+
+
+4.1 開啟 Controllers/HomeController.cs
+    加入下列私有成員到 HomeController 類別:
+
+        private LabDbContext _context;
+
+
+4.2 修改 HomeController 類別的建構函式，如下:
+
+        public HomeController(ILogger<HomeController> logger, LabDbContext context) {
+            _logger = logger;
+            _context = context;
+        }
+
+
+4.3 修改 Index() 的內容，如下:
+
+    public IActionResult Index() {
+        Product obj = _context.Products.Find(2);
+        return View(obj);
+    }
+
+
+4.4 滑鼠右鍵點按 Index() | 移至檢視
+    將 Index.cshtml 改成:
+
+    @model Lab_MultiUsers.Models.Product 
+    @{
+        ViewData["Title"] = "Home Page";
+    }
+
+    <form method="post" action="/home/buy">
+
+        Product name: @Model.ProductName <br />
+        Quantity: @Model.UnitsInStock
+
+        <hr />
+        <button type="submit" class="btn btn-outline-primary btn-large">Buy</button>
+
+    </form>
+
+
+4.5 修改 HomeController 類別，
+    加入下列 EndPoint:
+
+    [HttpPost]
+    public IActionResult Buy() {
+        Product obj = _context.Products.Find(2);
+        obj.UnitsInStock -= 1;
+        _context.SaveChanges();
+        return View(obj.UnitsInStock);
+    }
+
+
+4.6 滑鼠右鍵點按 Buy() | 新增檢視
+    Razor 檢視 <加入><新增>
+    將 Buy.cshtml 改成:
+
+    @model int
+    @{
+        ViewData["Title"] = "Buy";
+    }
+
+    <h1>Quantity: @Model</h1>
+
+
+4.7 Ctrl + F5
+    試買一個看看
+
+
+
+
+5.  模擬多人共用的衝突狀況
+
+
+5.1 啟動 SQL Server Management Studio
+
+
+5.2 連線到 .\SQLExpress，
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+5.3 新增查詢視窗，貼入並執行下列 SQL 敘述:
+
+    USE LabDb
+    GO
+
+    update Products set UnitsInStock = 100
+    where ProductId = 2
+    go
+
+    <Note>
+    #2 庫存量目前已設定為 100
+
+
+5.4 修改 HomeController 的 Buy()，如下: 
+
+    public IActionResult Buy() {
+        Product obj = _context.Products.Find(2);
+        obj.UnitsInStock -= 1;
+        System.Threading.Thread.Sleep(1000 * 15);
+        _context.SaveChanges();
+        return View(obj.UnitsInStock);
+    }
+
+
+5.5 Ctrl + F5
+    暫時先別點 <Buy> 按鈕
+
+
+5.6 在 SQL Server Management Studio
+    新增查詢視窗，貼入下列 SQL 敘述，但請先別執行:
+
+    USE LabDb
+    GO
+
+    update Products set UnitsInStock = 97
+    where ProductId = 2
+    go
+
+
+5.7 在瀏覽器，點按 <Buy> 按鈕
+    在 15 秒之內
+    回到 SQL Server Management Studio
+    執行步驟 5.6 的 SQL 敘述
+
+
+5.8 請問 Products 資料表 #2 產品的
+    庫存量目前是多少，這樣對嗎?
+
+
+5.9 在 Visual Studio，Ctrl + F5 啟動程式
+
+
+5.a 複製網址到另兩個新頁籤，一共有三個。
+    分別點按 <buy>
+    三個 Client 聯手買了三個，庫存量對嗎?
+
+
+
+
+6.  做個實驗，體驗一下鎖定的效果
+
+
+6.1 在 SQL Server Management Studio
+    新增查詢視窗，貼入並執行下列 SQL 敘述:
+
+    USE LabDb
+    GO
+
+    begin transaction
+    update Products set UnitsInStock = 96
+      where ProductId = 2    
+
+    <Note>
+    目前交易進行中，已鎖定資料。
+
+
+6.2 在瀏覽器，連結 /home/index
+
+
+6.3 在 SQL Server Management Studio
+    執行下列指定，結束交易異動。
+    commit transaction
+
+
+6.4 在 Controllers/HomeController.cs
+    修改 Index()，如下:
+
+    public IActionResult Index() {
+        var t = _context.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
+        Product obj = _context.Products.Find(2);
+        t.Commit();
+        return View(obj);
+    }
+
+
+6.5 在 SQL Server Management Studio
+    再次執行下列 SQL 敘述:
+
+    USE LabDb
+    GO
+
+    begin transaction
+    update Products set UnitsInStock = 96
+      where ProductId = 2    
+
+
+6.6 在 Visual Studio，Ctrl + F5，
+    瀏覽器連結 /home/index
+
+    <Note>
+    這回，可順利查出資料
+
+
+6.7 在 SQL Server Management Studio
+    執行下列指定，結束交易異動。
+    commit transaction
+
+
+
+
+7.  確定購買的當下，鎖定資料
+
+
+7.1 在 Controllers/HomeController.cs
+    修改 Buy()，如下:
+
+    [HttpPost]
+    public IActionResult Buy() {
+        var t = _context.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
+        Product obj = _context.Products.FromSqlRaw<Product>("select * from products with (xlock) where productId = 2").FirstOrDefault();
+        obj.UnitsInStock -= 1;
+        _context.SaveChanges();
+        System.Threading.Thread.Sleep(1000 * 10);
+        t.Commit();
+        return View(obj.UnitsInStock);
+    }
+
+    <Note>
+    請留意 select * from products with (xlock) where productId = 2
+    有加上 XLOCK 這個 table hint
+
+
+7.2 Ctrl + F5 啟動程式
+
+
+7.3 複製網址到另兩個新頁籤 (一共有三個)。
+
+
+7.4 分別點按三頁各自的 <buy>
+    三個 Client 聯手買了三個，
+    這次的庫存量終於對了嗎?
+
+
+7.5 請說明一下這個解決方案是如何運作的?
+

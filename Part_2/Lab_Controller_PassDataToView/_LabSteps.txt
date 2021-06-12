@@ -1,0 +1,217 @@
+Lab: Controller 如何傳遞 / 繫結資料到 View
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_Controller_PassDataToView <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  使用 ViewData
+
+
+2.1 開啟 Controllers/HomeController.cs
+
+
+2.2 修改 Index()，如下:
+
+        public IActionResult Index() {
+            ViewData["welcome"] = "Hello! world.";
+            
+            return View();
+        }
+
+
+2.3 滑鼠右鍵程式編輯器中的 Index() | 移至檢視
+    將 <h1> 元素改成:
+    <h1 class="display-4">@ViewData["welcome"]</h1>
+
+
+2.4 Ctrl + F5 測試程式
+
+
+2.5 請問，如果拼字成 @ViewData["Welcome"] 會怎樣?
+
+
+2.6 請問，如果錯誤拼字成 @ViewData["welcome2"] 會怎樣?
+
+
+
+
+3.  使用 ViewBag
+
+
+3.1 開啟 Controllers/HomeController.cs
+
+
+3.2 修改 Index()，如下:
+
+        public IActionResult Index() {
+            // ViewData["welcome"] = "Hello! world.";
+            ViewBag.Welcome = "Welcome!";
+            
+            return View();
+        }
+
+
+3.3 滑鼠右鍵程式編輯器中的 Index() | 移至檢視
+    將 <h1> 元素改成:
+    <h1 class="display-4">@ViewBag.Welcome</h1>
+
+3.4 Ctrl + F5 測試程式
+
+
+3.5 請問，如果拼字成 @ViewBag.welcome 會怎樣?
+
+
+3.6 請問，如果錯誤拼字成 @ViewBag.Welcome2.ToString() 會怎樣?
+
+
+3.7 最後，如果拼字成這樣呢?
+    <h1 class="display-4">@(ViewBag.Welcome2 ?? "Hello!") </h1>
+
+
+
+
+4.  使用 ViewModel
+
+
+4.1 開啟 Controllers/HomeController.cs
+
+
+4.2 修改 Index()，如下:
+
+        public IActionResult Index() {
+            // ViewData["welcome"] = "Hello! world.";
+            // ViewBag.Welcome = "Welcome!";
+            string dataToModel = "Welcome!!";
+
+            return View("index", dataToModel);
+        }
+
+
+4.3 滑鼠右鍵程式編輯器中的 Index() | 移至檢視
+    整個View的內容改成:
+    @model string 
+    @{
+        ViewData["Title"] = "Home Page";
+    }
+
+    <div class="text-center">
+        <h1 class="display-4">@Model</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    </div>
+
+
+4.4 請問: @model 與 @Model 的大寫小寫有差別嗎?
+
+
+4.4 @model 那行，一定要寫嗎?
+
+
+4.5 請練習一下，傳遞複雜一點的東西到 View，
+    例如: Employee 型態的物件
+
+
+
+5.  使用 TempData
+
+
+5.1 開啟 Controllers/HomeController.cs
+
+
+5.2 加入下列 EndPoint 到 HomeController 中:
+
+        public IActionResult First() {
+            TempData["prompt"] = "資料已新增";
+            return View();
+        }
+        public IActionResult Second() {
+            var prompt = TempData["prompt"] ?? "查無資料";
+            return View(prompt);
+        }
+        public IActionResult Third() {
+            var prompt = TempData["prompt"] ?? "查無資料";
+            return View(prompt);
+        }
+
+
+5.3 滑鼠右鍵點按程式編輯器中的 First() | 新增檢視
+    選擇: Razor檢視 - 空白
+    <加入>
+    名稱: First.cshtml
+    View 的內容如下:
+
+    <h1>First Page</h1>
+    <h3>TempData 已設定</h3>
+    <hr />
+    <a href="/Home/Second">連結到 Second 第二步驟</a>&nbsp;|&nbsp;
+    <a href="/Home/Third">連結到 Thrid 第三步驟</a>
+
+
+5.4 滑鼠右鍵點按程式編輯器中的 Second() | 新增檢視
+    選擇: Razor檢視 - 空白
+    <加入>
+    名稱: Second.cshtml
+    View 的內容如下:
+
+    <h1>Second Page</h1>
+    <h3>@Model</h3>
+    <hr />
+    <a href="/Home/Second">連結到 Second 第二步驟</a>&nbsp;|&nbsp;
+    <a href="/Home/Third">連結到 Thrid 第三步驟</a>
+
+
+5.5 滑鼠右鍵點按程式編輯器中的 Third() | 新增檢視
+    選擇: Razor檢視 - 空白
+    <加入>
+    名稱: Third.cshtml
+    View 的內容如下:
+
+    <h1>Third Page</h1>
+    <h3>@Model</h3>
+    <hr />
+    <a href="/Home/Second">連結到 Second 第二步驟</a>&nbsp;|&nbsp;
+    <a href="/Home/Third">連結到 Thrid 第三步驟</a>
+
+
+5.6 Ctrl + F5 啟動 Web 應用程式
+
+    修改網址: https://localhost:port/Home/First
+    例如: https://localhost:44318/Home/First
+
+
+5.7 依序點按 Second 、 Third 超連結，何時資料消失讀不出來?
+
+
+5.8 重回 /Home/First
+    依序點按 Third 、 Second 超連結，何時資料消失讀不出來?
+
+
+5.9 修改 Second() 的程式，如下:
+        public IActionResult Second() {
+            // var prompt = TempData["prompt"] ?? "查無資料";
+            var prompt = TempData.Peek("prompt") ?? "查無資料";
+            return View(prompt);
+        }
+
+
+5.a 重新再測一次 /Home/First 、/Home/Second、/Home/Third
+    這回，資料可否撐到第三步驟?
+

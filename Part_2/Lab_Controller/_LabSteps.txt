@@ -1,0 +1,135 @@
+Lab: 在 ASP.NET Core 寫作 Controller
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_Controller <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  加入控制器與檢視
+
+
+2.1 滑鼠右鍵點按 Controllers | 加入 | 控制器
+    選擇: MVC 控制器 - 空白
+    <加入>
+    名稱: LabController.cs
+
+
+2.2 滑鼠右鍵點按程式編輯器中的 Index() | 新增檢視
+    選擇: Razor檢視 - 空白
+    <加入>
+    名稱: Index.cshtml
+    內容隨意，例如: <h1>index of Lab</h1>
+
+
+2.3 Ctrl + F5 啟動 Web 應用程式
+
+
+2.4 修改網址: https://localhost:port/Lab/Index
+    例如: https://localhost:44315/Lab/Index
+
+
+3.  按下列程式片段，繼續完成 LabController
+
+        // https://localhost:port/Lab/Index
+        public IActionResult Index() {
+            return View();
+        }
+
+        // https://localhost:port/Lab/TestText
+        public ActionResult TestText() {
+            return Content("Hello! World.");
+        }
+
+        // https://localhost:port/Lab/About
+        // https://localhost:port/Lab/AboutMe
+        [ActionName("AboutMe")]
+        public ActionResult About() {
+            return Content("About");
+        }
+
+        // https://localhost:port/Lab/TestXML
+        public ActionResult TestXML() {
+            //ContentResult result = new ContentResult();
+            //result.Content = "<book><title>bookName</title><price>500</price></book>";
+            //result.ContentType = "text/xml";
+            ContentResult result = new ContentResult {
+                Content = "<book><title>bookName</title><price>500</price></book>",
+                ContentType = "text/xml"
+            };
+
+            return result;
+        }
+
+        // https://localhost:port/Lab/TestRedirect
+        public ActionResult TestRedirect() {
+            // return Redirect("http://www.hinet.net");
+            return RedirectToAction("Privacy", "Home");
+        }
+
+
+        // https://localhost:port/Lab/TestQueryString?FirstName=Jeremy&LastName=Lin
+        public ActionResult TestQueryString() {
+            string result = string.Format(
+                "FirstName = {0} <br> LastName = {1}",
+                HttpContext.Request.Query["FirstName"],
+                HttpContext.Request.Query["LastName"]
+                );
+            return Content(result, "text/html");
+        }
+
+        // https://localhost:port/Lab/TestInput?FirstName=Jeremy&LastName=Lin
+        public ActionResult TestInput(string LastName, string FirstName) {
+            string result = string.Format(
+                "FirstName => {0} <br> LastName => {1}",
+                FirstName,
+                LastName
+                );
+            return Content(result, "text/html");
+        }
+
+        // copy test.html into wwwroot folder
+        // https://localhost:port/test.html
+        //public ActionResult TestForm(IFormCollection frm) {
+        //    string result = string.Format(
+        //        "FirstName :: {0} <br> LastName :: {1}",
+        //        frm["FirstName"],
+        //        frm["LastName"]
+        //        );
+        //    return Content(result, "text/html");
+        //}
+
+        // create a class named Employee in Models folder
+        // using Lab_Controller.Models;
+        // https://localhost:port/test.html
+        public ActionResult TestForm(Employee emp) {
+            string result = string.Format(
+                "FirstName ::> {0} <br> LastName ::> {1}",
+                emp.FirstName,
+                emp.LastName
+                );
+            return Content(result, "text/html");
+        }
+
+        // https://localhost:port/Lab/TestID/3
+        public ActionResult TestID(string id) {
+            return Content("ID: " + id);
+        }
+

@@ -1,0 +1,14 @@
+﻿@model Lab_MultiUsers.Models.Product 
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<form method="post" action="/home/buy">
+
+    Product name: @Model.ProductName <br />
+    Quantity: @Model.UnitsInStock
+
+    <hr />
+    <button type="submit" class="btn btn-outline-primary btn-large">Buy</button>
+
+</form>

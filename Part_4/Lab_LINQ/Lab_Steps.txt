@@ -1,0 +1,301 @@
+Lab: 以 LINQ 語法實作 Web API
+
+- 以 ASP.NET Core 建立 WebAPI Server
+- 本專案採用 Database-first 作法
+- 說明/練習 LINQ 語法
+
+
+
+
+1.  建立資料庫
+
+
+1.1 啟動 SQL Server Management Studio
+
+
+1.2 連線到 .\SQLExpress，
+
+
+1.3 新增查詢視窗，貼入並執行下列 SQL 敘述:
+
+CREATE DATABASE LabDb
+GO
+
+USE LabDb
+GO
+
+CREATE TABLE Category (
+  CategoryId int NOT NULL PRIMARY KEY,
+  CategoryName nvarchar(30)
+)
+GO
+
+CREATE TABLE Products (
+  ProductId int identity NOT NULL PRIMARY KEY,
+  CategoryId int NOT NULL,
+  ProductName nvarchar(30),
+  Price money,
+  UnitsInStock int
+)
+GO
+
+alter table Products
+  add constraint FK_Category_Products
+    foreign key (CategoryId) references Category(CategoryId)
+go
+
+insert into Category values (1, 'Camera');
+insert into Category values (2, 'Lens');
+go
+
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (1, 'Canon R5', 119000, 5);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (1, 'Canon R6', 76900, 100);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'Canon RF 35mm F1.8', 14900, 2);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'CANON RF 70-200mm f/2.8L', 76900, 3);
+insert into Products (CategoryId, ProductName, Price, UnitsInStock)
+  values (2, 'Canon RF 100-500mm F4.5-7.1L', 82900, 1);
+go
+
+select * from Category;
+select * from Products;
+
+
+
+
+2.  建立新專案
+
+2.1 啟動 Visual Studio
+
+2.2 點按<建立新的專案>選項
+
+2.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+2.4 選擇 ASP.NET Core Web API <下一步>
+
+2.5 專案名稱: Lab_LINQ <下一步>
+
+2.6 目標Framework: .NET 5
+    <建立>
+
+
+
+
+3.  建立資料模型與資料內容類別
+
+
+3.1 滑鼠右鍵點按專案 | 加入 | 新增資料夾，
+    名稱:「Models」
+
+
+3.2 工具 | NuGet 套件管理員 | 套件管理器主控台
+    依序輸入下列指令:
+
+Install-Package Microsoft.EntityFrameworkCore.Tools
+Install-package Microsoft.EntityFrameworkCore.SqlServer
+
+
+3.3 繼續在套件管理器主控台輸入下列指令:
+
+Scaffold-DbContext "Server=.\sqlexpress;Database=LabDb;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+3.4 檢視 Models 資料夾多出來的三個檔案，
+    特別是物件的單複數型
+    以及 Category 與 Products 兩個類別的關聯關係
+
+
+3.5 開啟 LabDbContext.cs，將 OnConfiguring() 整個設為註解或刪除
+
+
+3.6 開啟 appSettings.json，加入 ConnectionStrings 屬性
+    "ConnectionStrings": {
+      "LabDbContext": "Server=.\\sqlexpress;Database=LabDb;Integrated Security=True;"
+    }
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+    完成後的 appSettings.json:
+
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      },
+      "ConnectionStrings": {
+        "LabDbContext": "Server=.\\sqlexpress;Database=LabDb;Integrated Security=True;"
+      },
+      "AllowedHosts": "*"
+    }
+
+
+3.7 開啟 Startup.cs，加入 using 參照:
+    using Microsoft.EntityFrameworkCore;
+    using Lab_LINQ.Models;
+
+
+3.8 一樣是Startup.cs，找到 ConfigureServices()，
+    將下列程式加到 ConfigureServices() 的一開頭:
+
+    services.AddDbContext<LabDbContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("LabDbContext")));
+
+
+3.9 建置 | 重建方案
+
+
+
+
+4.  建立控制器(Controller)
+
+
+4.1 滑鼠右鍵點按 Controllers 資料夾 ｜ 加入 | 新增 Scaffold 項目
+    
+    - 切換到 API 分類
+    - 選擇：使用 Entity Framework 執行動作的 API 控制器，<加入>
+    - 模型類別: Product
+    - 資料內容類別: LabDbContext
+    - 控制器名稱: ProductsController
+    <新增>
+
+
+4.2 開啟 Properties\launchSettings.js
+    修改 "launchUrl": "swagger" 
+    改成 "launchUrl": "api/Products"
+
+
+4.3 Crtl + F5 執行程式
+
+    <Note>
+    請檢視程式產生的 JSON 內容
+    特別是 Cateotry 屬性的值
+
+
+
+
+5.  使用 LINQ 語法
+
+
+5.1 開啟 Controllers/ProductsController.cs，
+    針對 GetProducts()，修改內容成:
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Product>>> GetProducts() {
+        var query = from o in _context.Products
+                    orderby o.CategoryId ascending, o.Price descending
+                    select o;
+        return await query.ToListAsync();
+    }
+
+
+5.2 Crtl + F5 執行程式
+    檢視程式產生的 JSON 內容
+
+
+5.3 開啟 Controllers/ProductsController.cs，
+    針對 GetProducts()，修改內容成:
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<dynamic>>> GetProducts() { 
+        var query = from o in _context.Products
+                    orderby o.CategoryId ascending, o.Price descending
+                    select new {
+                        CategoryId = o.CategoryId,
+                        ProductId = o.ProductId,
+                        ProductName = o.ProductName,
+                        Pirce = o.Price,
+                        UnitsInStock = o.UnitsInStock
+                    };
+        return await query.ToListAsync();
+    }
+
+
+5.4 Crtl + F5 執行程式
+    檢視程式產生的 JSON 內容
+
+
+5.5 針對 GetProducts()，再修改內容成:
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<dynamic>>> GetProducts() { 
+        var query = from o in _context.Products
+                    join c in _context.Categories on o.CategoryId equals c.CategoryId
+                    orderby o.CategoryId ascending, o.Price descending
+                    select new {
+                        CateoryId = o.CategoryId,
+                        CategoryName = c.CategoryName,
+                        ProductId = o.ProductId,
+                        ProductName = o.ProductName,
+                        Pirce = o.Price,
+                        UnitsInStock = o.UnitsInStock
+                    };
+        return await query.ToListAsync();
+    }
+
+
+5.6 Crtl + F5 執行程式
+    檢視程式產生的 JSON 內容
+
+
+5.7 開啟 Controllers/ProductsController.cs，
+    加入下列端點:
+
+    // /api/Products/price/1000/90000
+    [HttpGet("price/{minPrice}/{maxPrice}")]
+    public IActionResult GetProductByPrice(int minPrice, int maxPrice) {
+        var obj = new {
+            min = minPrice,
+            max = maxPrice
+        };
+
+        return Ok(obj);
+    }
+
+
+5.8 Crtl + F5 執行程式
+    修改網址為:
+    https://localhost:埠號/api/Products/price/1000/90000
+    例如:
+    https://localhost:44351/api/Products/price/1000/90000
+    檢視程式產生的 JSON 內容
+
+
+5.9 將 GetProductByPrice() 改成:
+
+    // /api/Products/prie/100/100000
+    [HttpGet("price/{minPrice}/{maxPrice}")]
+    public async Task<ActionResult<IEnumerable<dynamic>>> GetProductByPrice(int minPrice, int maxPrice) {
+        var query = from o in _context.Products
+                    where o.Price >= minPrice && o.Price <= maxPrice
+                    select new {
+                        CategoryId = o.CategoryId,
+                        ProductId = o.ProductId,
+                        ProductName = o.ProductName,
+                        Pirce = o.Price,
+                        UnitsInStock = o.UnitsInStock
+                    };
+
+        return await query.ToListAsync();
+    }
+
+
+5.a Crtl + F5 執行程式
+    修改網址為:
+    https://localhost:埠號/api/Products/price/1000/90000
+    例如:
+    https://localhost:44351/api/Products/price/1000/90000
+    檢視程式產生的 JSON 內容
+

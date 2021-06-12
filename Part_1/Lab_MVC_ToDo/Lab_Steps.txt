@@ -1,0 +1,223 @@
+Lab: 以 ASP.NET Core 建立 MVC Web App
+
+- 以 ASP.NET Core 建立 MVC Web App
+- 本專案採用 Code-first 建立資料庫
+- 後來改用 UseInMemoryDatabase 將資料從 SQL Server 改存到記憶體，
+  示範 Dependency Injection 在程式維護方面的效用
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_MVC_ToDo <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  建立資料模型與資料內容類別
+
+
+2.1 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: TodoItem
+    <新增>
+
+
+2.2 TodoItem.cs 的檔案內容:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+
+namespace Lab_MVC_ToDo.Models
+{
+    public class TodoItem
+    {
+        [Key]
+        public long TodoItemId { get; set; }
+        public string Name { get; set; }
+        public bool IsComplete { get; set; }
+    }
+}
+
+
+2.3 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+    Install-Package Microsoft.EntityFrameworkCore.SqlServer
+
+
+2.4 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: TodoContext
+    <新增>
+
+
+2.5 TodoContext.cs 的檔案內容:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lab_MVC_ToDo.Models {
+    public class TodoContext : DbContext {
+        public TodoContext(DbContextOptions<TodoContext> options)
+            : base(options) {
+
+        }
+
+        public DbSet<TodoItem> TodoItems { get; set; }
+    }
+}
+
+
+2.6 開啟 Startup.cs，加入下列 using 參照:
+
+    using Lab_MVC_ToDo.Models;
+    using Microsoft.EntityFrameworkCore;
+
+
+2.7 一樣是 Startup.cs，找到 ConfigureServices()，改成:
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllersWithViews();
+        services.AddDbContext<TodoContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("TodoContext")));
+
+    }
+
+
+2.8 開啟 appSettings.json，加入 ConnectionStrings 屬性
+    "ConnectionStrings": {
+      "TodoContext": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    }
+
+    完成後的 appSettings.json:
+    {
+    "Logging": {
+        "LogLevel": {
+        "Default": "Information",
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information"
+        }
+    },
+    "ConnectionStrings": {
+        "TodoContext": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    },
+    "AllowedHosts": "*"
+    }
+
+
+2.9 建置 | 重建方案，確認專案可成功編譯無錯誤訊息。
+
+
+
+
+3.  建立 SQL Server 資料庫
+
+
+3.1 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+
+Install-Package Microsoft.EntityFrameworkCore.Tools
+Add-Migration InitialCreate
+Update-Database
+
+
+3.2 啟動 SQL Server Management Studio
+
+
+3.3 連線到 .\SQLExpress
+
+
+3.4 確認一下 todoItemDb 已建立
+
+
+
+
+4.  建立控制器(Controller)與使用者操作介面
+
+
+4.1 滑鼠右鍵點按 Controllers 資料夾 ｜ 加入 | 新增 Scaffold 項目
+    
+    - 切換到 MVC 分類
+    - 選擇：使用 Entity Framework 執行檢視的 MVC 控制器，<加入>
+    - 模型類別: TodoItem
+    - 資料內容類別: TodoContext
+    - 控制器名稱: TodoItemsController
+    <新增>
+
+
+4.2 Crtl + F5 執行程式
+
+
+4.3 瀏覽網址改成:
+    https://localhost:你的專案埠號/todoItems
+    例如:
+    https://localhost:44326/todoItems
+
+
+4.4 增查修刪幾筆待辦事項
+
+
+4.5 以 SQL Server Management Studio 觀看資料是否存入資料庫
+
+
+
+
+5.  體會 Dependency Injection
+
+
+5.1 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+
+    install-package Microsoft.EntityFrameworkCore.InMemory
+
+
+5.2 開啟 Startup.cs，找到 ConfigureServices()，改成:
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllersWithViews();
+        //services.AddDbContext<TodoContext>(options =>
+        //        options.UseSqlServer(Configuration.GetConnectionString("TodoContext")));
+        services.AddDbContext<TodoContext>(opt =>
+            opt.UseInMemoryDatabase("TodoList"));
+    }
+
+
+5.3 Crtl + F5 執行程式
+
+
+5.4 瀏覽網址改成:
+    https://localhost:你的專案埠號/todoItems
+    例如:
+    https://localhost:44326/todoItems
+
+
+5.5 增查修刪幾筆待辦事項
+
+
+5.6 以 SQL Server Management Studio 觀看資料是否存入資料庫?
+
+    <Note> 現在改成利用記憶體儲存資料
+    
+    <Note> 
+    改用記憶體而非 SQL Server 存放資料，
+    我們的程式修改幅度會很大嗎?
+

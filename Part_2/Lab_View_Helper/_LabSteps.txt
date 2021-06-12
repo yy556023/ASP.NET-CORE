@@ -1,0 +1,109 @@
+Lab: 使用 ASP.NET Core 的 Helper 建構 View
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_View_Helper <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  準備資料
+
+
+2.1 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: Product
+    <新增>
+
+
+2.2 修改 Models/Product.cs 的內容如下:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Lab_View_Helper.Models {
+    public class Product {
+        public int Id;
+
+        public string Name { get; set; }
+
+        public int Price { get; set; }
+    }
+}
+
+
+2.3 在 Models/Product.cs 加入下列 using 參照:
+    using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel;
+
+
+2.4 針對 Product 類別，改成:
+
+    public class Product {
+        public int Id;
+
+        [Required(ErrorMessage = "產品名稱是必填資料")]
+        [DisplayName("產品名稱")]
+        public string Name { get; set; }
+
+        [DisplayName("價格")]
+        [Range(1, int.MaxValue, ErrorMessage = "價格請大於零")]
+        public int Price { get; set; }
+    }
+
+
+2.3 存檔之後。建置 | 重建方案
+
+
+
+
+3.  加入 Razor View
+
+
+3.1 開啟 Controllers/HomeController.cs，加入下列 EndPoint:
+
+    public IActionResult Create() {
+        return View();
+    }
+
+
+3.2 滑鼠右鍵點按程式編輯器內的 Create() | 新增檢視
+    選擇 Razor 檢視
+    <加入>
+
+
+3.3 在新增檢視對話盒:
+    檢視名稱: Create
+    範本: 選擇 Create
+    模型類別: 選擇 Product
+    <新增>
+
+
+3.4 Ctrl + F5 啟動 Web 應用程式
+    觀察各欄位的提示名稱
+    故意不輸入產品名稱，價格也故意輸入負數
+    觀察錯誤訊息
+
+
+3.5 滑鼠右鍵瀏覽器視窗 | 檢視原始碼
+
+
+3.6 檢視 Views/Home/Create.cshtml 的內容
+    與 3.5 的原始碼進行比對

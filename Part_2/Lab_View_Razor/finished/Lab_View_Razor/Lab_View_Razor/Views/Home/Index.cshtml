@@ -1,0 +1,54 @@
+﻿@using Lab_View_Razor.Models;
+@model Student[]
+@{
+    ViewData["Title"] = "Home Page";
+    // TODO: Lab Step 3.2
+    var userName = ViewData["userName"] ?? "Guest";
+}
+
+<!-- TODO: Lab Step 5.2 -->
+<style>
+    .fail {
+        color: red;
+    }
+</style>
+
+<div class="container">
+    <div class="row">
+        <!-- 左側: -->
+        <div class="col-4">
+            <h3>Hello! @userName </h3>
+            <div>@ViewData["twoLines"]</div>
+            <div>@Html.Raw(ViewData["twoLines"])</div>
+            @{
+                if (userName?.ToString() == "Guest") {
+                    <a href="/Member/Login">Login</a>
+                } else {
+                    <a href="/Member/Index">Member Center</a>
+                }
+            }
+        </div>
+        <!-- 中間: -->
+        <div class="col-4">
+            <ul>
+                @{
+                    foreach (var student in Model) {
+                        <li class="@((student.Score < 60) ? "fail" : "")">@student.Name, @student.Score</li>
+                    }
+                }
+            </ul>
+        </div>
+        <!-- 右側: -->
+        <div class="col-4">
+            <ul>
+                @{
+                    foreach (var student in Model) {
+                        <li class="@student.ClassName">@student.Name, @student.Score</li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+
+
+</div>

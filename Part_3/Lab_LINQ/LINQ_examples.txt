@@ -1,0 +1,367 @@
+﻿var
+LINQ_Object
+LINQ_ADO_NET
+RegularExpression
+LINQ_SQL(Entity)
+
+
+// --------------------------------------------------------------------------------
+// var
+
+        private void button1_Click(object sender, EventArgs e) {
+            Employee emp = new Employee();
+            emp.id = 1;
+            emp.name = "name 1";
+
+            Employee emp2 = new Employee() { id = 2, name = "Derek Jeter" };
+
+            var emp7 = new Employee() { id = 7, name = "Jeremy Lin" };
+
+            //Employee[] empList = new Employee[3];
+            //empList[0] = emp;
+            //empList[1] = emp2;
+            //empList[2] = emp7;
+
+            Employee[] empList = new Employee[] {
+                new Employee() { id = 1, name = "Taiwan No. 1" },
+                new Employee() { id = 2, name = "Derek Jeter" },
+                new Employee() { id = 7, name = "Jeremy Lin" }
+            };
+
+            button1.Text = empList[2].name;
+
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            var emp10 = new { id = 10, LastName = "Messi", country = "A." };
+            button2.Text = emp10.GetType().ToString();
+            this.Text = emp10.LastName;
+        }
+
+        private void button3_Click(object sender, EventArgs e) {
+            var cityList = new [] {
+                new { cityID = "TC", cityName = "TaiChung" },
+                new { cityID = "TP", cityName = "TaiPei" }
+            };
+
+            button3.Text = cityList[1].cityName;
+        }
+
+
+
+    class Employee {
+        private int _id;
+        public int id {
+            set {
+                this._id = value;
+            }
+            get {
+                return this._id;
+            }
+        }
+
+        public string name { get; set; }
+
+    }
+
+
+// --------------------------------------------------------------------------------
+// LINQ_Object
+
+        private void button1_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            var query = from o in dataList
+                        select o;
+
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            //var query = from o in dataList
+            //            orderby o ascending
+            //            select o;
+            var query = from data in dataList
+                        orderby data descending
+                        select data;
+            
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+
+        }
+
+        private void button3_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            var query = from data in dataList
+                        where data == "a2"
+                        orderby data descending
+                        select data;
+
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            // where data.Contains("a")
+            var query = from data in dataList
+                        where data.IndexOf("a") >= 0
+                        orderby data descending
+                        select data;
+            
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+        }
+
+        private void button5_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a31x", "a2", "c" };
+            System.Text.RegularExpressions.Regex rx = new System.Text.RegularExpressions.Regex(@"^a[0-9]*$");
+
+            // where data.Contains("a")
+            var query = from data in dataList
+                        where rx.IsMatch(data)
+                        orderby data descending
+                        select data;
+
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            var query = from data in dataList
+                        where data.IndexOf("a") >= 0
+                        orderby data descending
+                        select data.ToUpper();
+
+            foreach (var item in query) {
+                MessageBox.Show(item);
+            }
+
+        }
+
+        private void button7_Click(object sender, EventArgs e) {
+            string[] dataList = new string[] { "a1", "b", "a2", "c" };
+
+            var query = from data in dataList
+                        where data.IndexOf("a") >= 0
+                        orderby data descending
+                        select new { original = data, upperVer = data.ToUpper() };
+
+            foreach (var item in query) {
+                MessageBox.Show(item.upperVer);
+            }
+
+
+        }
+
+        class Food {
+            public string name { set; get; }
+            public int price { set; get; }
+        }
+
+        private void button8_Click(object sender, EventArgs e) {
+            Food[] foodList = new Food[] {
+                new Food() { name = "milk", price = 5 },
+                new Food() { name = "bread", price = 15 },
+                new Food() { name = "sugar", price = 15 },
+                new Food() { name = "water", price = 2 }
+            };
+
+            var query = from food in foodList
+                        where food.price > 2
+                        orderby food.price ascending, food.name descending
+                        select new { FoodName = food.name, Price_NT = food.price * 10  };
+
+            foreach (var item in query) {
+                MessageBox.Show(item.FoodName);
+            }
+
+        }
+
+
+
+// --------------------------------------------------------------------------------
+// LINQ_ADO_NET
+
+        private void button1_Click(object sender, EventArgs e) {
+            da.Fill(ds.Products);
+
+            DataTable dt = ds.Products;
+
+            var query = from p in dt.AsEnumerable()
+                        select new { id = p["ProductID"], name = p["ProductName"] };
+
+            dataGridView1.DataSource = query.ToList();
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            da.Fill(ds.Products);
+
+            // NorthwindDataSet.ProductsDataTable dt = ds.Products;
+
+            var query = from p in ds.Products
+                        select p;
+
+            dataGridView1.DataSource = query.ToList();
+
+        }
+
+        private void button4_Click(object sender, EventArgs e) {
+            var query = from p in ds.Products
+                        where p.ProductID == 1
+                        select p;
+
+            // NorthwindDataSet.ProductsRow objProduct = query.Single();
+            var objProduct = query.Single();
+
+            objProduct.UnitPrice = 100;
+
+            dataGridView1.DataSource = ds.Products;
+        }
+
+
+
+
+// --------------------------------------------------------------------------------
+// RegularExpression
+
+	// using System.Text.RegularExpressions;
+	private void button1_Click(object sender, EventArgs e) {
+            // CI-NNN
+            // static:
+            // CI-
+            // variable:
+            // CI-[0-9][0-9][0-9]
+            Regex monitor = new Regex("^CI-[0-9][0-9][0-9]$");
+            button1.Text = (monitor.IsMatch(textBox1.Text)) ? "Pass" : "Wrong Format";
+
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            //   \d  0-9        \D not 0-9
+            //   \w  0-9A-Za-z
+            Regex monitor = new Regex(@"^CI-\d\d\d$");
+            button1.Text = (monitor.IsMatch(textBox1.Text)) ? "Pass" : "Wrong Format";
+        }
+
+        private void button3_Click(object sender, EventArgs e) {
+            // National ID: [A-Z][12]\d\d\d\d\d\d\d\d
+            // // National ID: [A-Z][12]\d{8}
+            // Regex monitor = new Regex(@"^CI-\d{3,5}$");  // 三到五個數字
+            // button1.Text = (monitor.IsMatch(textBox1.Text)) ? "Pass" : "Wrong Format";
+
+            // +  {1, 9999999999}
+            // *  {0, 9999999990}
+            // ?  {0,1}
+            Regex monitor = new Regex(@"^CI-\d*$");  // 三到五個數字
+            button1.Text = (monitor.IsMatch(textBox1.Text)) ? "Pass" : "Wrong Format";
+        }
+
+        private void button4_Click(object sender, EventArgs e) {
+            // (...)   群組
+            // |       或者
+            // Regex monitor = new Regex(@"^\w+@\w+$");
+            Regex monitor = new Regex(@"^\w+([-.]\w+)*@\w+([-.]\w+)+$");
+            button4.Text = (monitor.IsMatch(textBox2.Text)) ? "Pass" : "Wrong Format";
+
+            // 03-1234567
+            // 04-12345678
+            // 035-123456
+            // (04)12345678
+            // (035)123456
+            // 
+            // 0\d-\d{7,8}
+            // 0\d\d-\d{6}
+            // \(0\d\)\d{7,8}
+            // \(0\d\d\)\d{6}
+        }
+
+        private void button5_Click(object sender, EventArgs e) {
+            Regex monitor = new Regex(@"^\d{3}$|^\d{5}$");
+            button5.Text = (monitor.IsMatch(textBox3.Text)) ? "Pass" : "Wrong Format";
+        }
+
+
+
+
+// --------------------------------------------------------------------------------
+// LINQ_SQL(Entity)
+
+
+        NorthwindEntities context = new NorthwindEntities();
+
+        private void button1_Click(object sender, EventArgs e) {
+            var query = from p in context.Products
+                        select p;
+
+            dataGridView1.DataSource = query.ToList();
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            var query = from p in context.Products
+                        where p.UnitPrice >= 10
+                        orderby p.CategoryID descending, p.UnitPrice ascending
+                        select new { id = p.ProductID, name = p.ProductName };
+
+            dataGridView1.DataSource = query.ToList();
+
+        }
+
+        private void button3_Click(object sender, EventArgs e) {
+            context.SaveChanges();
+        }
+
+        private void button4_Click(object sender, EventArgs e) {
+            var query = from p in context.Products
+                        where p.ProductID >= 1
+                        select p;
+            var objProduct = query.First();
+            objProduct.UnitsInStock = 111;
+
+            context.SaveChanges();
+
+            // dataGridView1.DataSource = query.ToList();
+        }
+
+
+        private void button5_Click(object sender, EventArgs e) {
+            var query = from p in context.Products
+                        select p;
+
+            // var query2 = query.OrderBy(p => p.CategoryID);
+            var query2 = query.OrderByDescending(p => p.CategoryID);
+            dataGridView1.DataSource = query2;
+
+            // var test = query.Max(p => p.UnitsInStock);
+            var test = query.Sum(p => p.UnitsInStock * p.UnitPrice);
+            this.Text = test.ToString();
+        }
+
+        private void button6_Click(object sender, EventArgs e) {
+            // Query
+            var query = from p in context.Products
+                        where p.CategoryID == 1
+                        select p;
+            // Data process...
+            foreach (var prod in query) {
+                prod.UnitPrice -= 1;
+            }
+            // Update to SQL Server.
+            context.SaveChanges();
+
+        }
+
+

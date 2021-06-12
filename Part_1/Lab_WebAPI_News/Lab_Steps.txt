@@ -1,0 +1,182 @@
+Lab: 以 ASP.NET Core 建立 WebAPI Server
+
+- 以 ASP.NET Core 建立 WebAPI Server
+- 本專案採用 Database-first 作法
+- Client framework: Vue.JS
+
+
+
+
+0.  設定
+
+0.1 啟動 SQL Server Management Studio
+
+0.2 連線到 .\SQLExpress，
+
+0.3 新增查詢視窗，貼入並執行下列 SQL 敘述:
+
+CREATE DATABASE newsDb
+GO
+
+USE newsDb
+GO
+
+CREATE TABLE news (
+  newsId int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+  ymd char(10),
+  title nvarchar(50)
+)
+GO
+
+INSERT news (ymd, title) VALUES ('2021-05-01', N'News A')
+INSERT news (ymd, title) VALUES ('2021-05-02', N'News B')
+INSERT news (ymd, title) VALUES ('2021-05-03', N'News C')
+INSERT news (ymd, title) VALUES ('2021-05-04', N'News D')
+INSERT news (ymd, title) VALUES ('2021-05-05', N'News E')
+GO
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web API <下一步>
+
+1.5 專案名稱: Lab_WebAPI_News <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，不要勾選
+    <建立>
+
+
+
+
+2.  建立資料模型與資料內容類別
+
+
+2.1 滑鼠右鍵點按專案 | 加入 | 新增資料夾，
+    名稱:「Models」
+
+
+2.2 工具 | NuGet 套件管理員 | 套件管理器主控台
+    依序輸入下列指令:
+
+Install-Package Microsoft.EntityFrameworkCore.Tools
+install-package Microsoft.EntityFrameworkCore.SqlServer
+Scaffold-DbContext "Server=.\sqlexpress;Database=newsDb;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+
+
+2.3 開啟 newsDbContext.cs，將 OnConfiguring() 整個設為註解或刪除
+
+
+2.4 開啟 appSettings.json，加入 ConnectionStrings 屬性
+    "ConnectionStrings": {
+      "linkToNewsDb": "Server=.\\sqlexpress;Database=newsDb;Integrated Security=True;"
+    }
+
+    完成後的 appSettings.json:
+
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      },
+      "ConnectionStrings": {
+        "linkToNewsDb": "Server=.\\sqlexpress;Database=newsDb;Integrated Security=True;"
+      },
+      "AllowedHosts": "*"
+    }
+
+
+2.5 開啟 Startup.cs，加入 using 參照:
+    using Microsoft.EntityFrameworkCore;
+    using Lab_WebAPI_News.Models;
+
+
+2.6 一樣是Startup.cs，找到 ConfigureServices()
+    - 去除 services.AddSwaggerGen()
+    - 加入下列程式
+    services.AddDbContext<newsDbContext>(options =>
+    options.UseSqlServer(Configuration.GetConnectionString("linkToNewsDb")));
+
+    完成後的程式像這樣:
+
+        public void ConfigureServices(IServiceCollection services) {
+            services.AddDbContext<newsDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("linkToNewsDb")));
+
+            services.AddControllers();
+
+            //services.AddSwaggerGen(c => {
+            //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Lab_WebAPI_News", Version = "v1" });
+            //});
+        }
+
+
+2.7 找到 Configure()，將下列兩行程式設為註解或刪除:
+    //app.UseSwagger();
+    //app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Lab_WebAPI_News v1"));
+
+
+
+
+3.  建立控制器(Controller)
+
+3.1 滑鼠右鍵點按 Controllers 資料夾 ｜ 加入 | 新增 Scaffold 項目
+
+    - 選擇：使用 Entity Framework 執行動作的 API 控制器，<加入>
+    - 模型類別: News
+    - 資料內容類別: newsDbContext
+    - 控制器名稱: NewsController
+    <新增>
+
+
+3.2 開啟 Properties\launchSettings.js
+    修改 "launchUrl": "swagger"
+    改成 "launchUrl": "api/news"
+
+
+3.3 Crtl + F5 執行程式
+
+
+
+
+4.  Client 端的使用者操作畫面與程式
+
+
+4.1 滑鼠右鍵點按專案 | 加入 | 新增資料夾，
+    名稱:「wwwroot」
+
+
+4.2 在檔案總管，開啟本練習的 wwwroot 資料夾
+    全選其中的全部檔案與資料夾，滑鼠右鍵 | 複製
+
+
+4.3 在 Visual Studio 的方案總管，開啟 wwwroot，
+    貼入 4.2 的檔案
+
+
+4.4 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+
+    Install-Package Microsoft.AspNetCore.StaticFiles
+
+
+4.5 開啟 Startup.cs，找到 Configure()，
+    加入下列兩行程式到 app.UseRouting(); 之前
+
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+
+
+4.6 Crtl + F5 執行程式

@@ -1,0 +1,243 @@
+Lab: 使用 View 的版面構成功能
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_View_Layout <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  不使用 Layouot 版面配置
+
+
+2.1 開啟 Controllers/HomeController.cs
+
+
+2.2 加入下列的 EndPoint 到 HomeController 類別:
+
+    public IActionResult Alone() {
+        return View();
+    }
+
+
+2.3 滑鼠右鍵點按 Alone() | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+
+
+2.4 在「新增 Razon 檢視」對話盒:
+    檢視名稱: Alone
+    使用版本配置頁: 清空，不要勾選
+    <新增>
+
+
+2.5 Views/Home/Alone.cshtml 的內容改成:
+
+    @{
+        Layout = null;
+    }
+
+    <!DOCTYPE html>
+
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <title>Alone</title>
+    </head>
+    <body>
+        <h1>我的 Layout 是設定成 null 的</h1>
+    </body>
+    </html>
+
+
+2.6 Ctrl + F5 啟動 Web 應用程式
+
+
+2.7 瀏覽器的網址路徑改成:
+    https://localhost:埠號/Home/Alone
+    例如:
+    https://localhost:44363/Home/Alone
+
+
+
+
+3.  新增 Layout 頁
+
+
+3.1 滑鼠右鍵點按 Views/Shared | 加入 | 檢視
+    切換到「檢視」分類
+    選擇: Razor 檢視 - 空白
+    <加入>
+
+
+3.2 在新增項目對話盒:
+    選擇: Razor 版面配置
+    名稱: _MyLayout.cshtml
+    <新增>
+
+
+3.3 Views/Shared/_MyLayout.cshtml 的內容如下:
+
+    <!DOCTYPE html>
+
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <title>@ViewBag.Title</title>
+        @RenderSection("MyStyle", required: false)
+    </head>
+    <body>
+        <div>
+            <a href="/Home/Lobby">Lobby</a>&nbsp;|&nbsp;
+            <a href="/Home/Page1">Page One</a>&nbsp;|&nbsp;
+            <a href="/Home/Page2">Page Two</a>
+            <hr />
+            @RenderBody()
+        </div>
+        @await RenderSectionAsync("MyScripts", required: false)
+    </body>
+    </html>
+
+
+
+
+4.  應用 Layout 頁
+
+
+4.1 編輯 Controllers/HomeController.cs，加入下列 EndPoint:
+
+    public IActionResult Lobby() {
+        TempData["prompt"] = $"Today is : {DateTime.Now.ToString("yyyy-MM-dd")}";
+        return View();
+    }
+
+    <Note>
+    TempData["prompt"] 那行暫且先不管它，稍後我們會用到
+
+
+4.2 滑鼠右鍵點按 Lobby() 程式 | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    檢視名稱: Lobby
+    勾選版面配置頁，點按「...」按鈕，瀏覽並選擇:
+    Views/Shared/_MyLayout.cshtml
+    <新增>
+
+
+4.3 編輯 Controllers/HomeController.cs，加入下列 EndPoint:
+    public IActionResult Page1() {
+        return View();
+    }
+
+
+4.4 滑鼠右鍵點按 Lobby() 程式 | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    檢視名稱: Page1
+    勾選版面配置頁，同意預設值:
+    ~/Views/Shared/_MyLayout.cshtml
+    <新增>
+
+
+4.5 編輯 Controllers/HomeController.cs，加入下列 EndPoint:
+    public IActionResult Page2() {
+        return View();
+    }
+
+
+4.6 滑鼠右鍵點按 Lobby() 程式 | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    檢視名稱: Page2
+    勾選版面配置頁，同意預設值:
+    ~/Views/Shared/_MyLayout.cshtml
+    <新增>
+
+
+4.7 Ctrl + F5 啟動 Web 應用程式
+
+
+4.8 瀏覽器的網址路徑改成:
+    https://localhost:埠號/Home/Lobby
+    例如:
+    https://localhost:44363/Home/Lobby
+
+    <Note>
+    分別點按 Page One 與 Page Two 連結
+
+
+<Note>
+觀察 Lobby、Page1、Page2 三個 View 都有下列這行 Razor 程式:
+Layout = "~/Views/Shared/_MyLayout.cshtml";
+
+如果不想每個 View 都指定一遍，
+可利用 Shared/_Layout.cshtm 統一設定
+
+
+
+
+5.  使用 Section 節區
+
+
+5.1 編輯 Views/Home/Page1.cshtml，
+    在檔案結尾處，加入下列內容:
+
+    @section MyStyle {
+        <style>
+            h1 {
+                color: blue;
+            }
+        </style>
+    } 
+
+
+5.2 Ctrl + F5 啟動 Web 應用程式
+
+
+5.3 瀏覽器的網址路徑改成:
+    https://localhost:埠號/Home/Lobby
+    例如:
+    https://localhost:44363/Home/Lobby
+
+    <Note>
+    分別點按 Page One 與 Page Two 連結
+    應該會發現 Page One 的 H1 標題是藍色的
+
+
+5.4 編輯 Views/Home/Page2.cshtml，
+    在檔案結尾處，加入下列內容:
+
+    @section MyScripts {
+        <script>
+            alert("@(TempData["prompt"] ?? "Hello!")")
+        </script>
+    }
+
+
+5.5 Ctrl + F5 啟動 Web 應用程式
+
+
+5.6 瀏覽器的網址路徑改成:
+    https://localhost:埠號/Home/Lobby
+    例如:
+    https://localhost:44363/Home/Lobby
+
+
+5.7 點按 Page Two 連結
+    觀察 JavaScript 程式運作的情形

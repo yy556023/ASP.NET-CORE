@@ -1,0 +1,7 @@
+建議順序:
+
+Lab_Controller
+Lab_Controller_PassDataToView
+Lab_View_Razor
+Lab_View_Layout
+Lab_View_Helper

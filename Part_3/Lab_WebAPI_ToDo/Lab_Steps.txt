@@ -1,0 +1,346 @@
+Lab: 以 ASP.NET Core 建立 Web API 應用程式 (配合 Vue.JS)
+
+
+
+
+0.  環境準備
+
+
+0.1 啟動命令列提示字元，輸入下列指令:
+    node -v
+    如果不是出現版本訊息而是錯誤訊息，請至
+    https://nodejs.org
+    下載 LTS 版 Node.js 回來安裝
+
+
+0.2 啟動命令列提示字元，輸入下列指令:
+    vue --version
+    如果不是出現版本訊息而是
+    錯誤訊息，請輸入下列指令:
+    npm install -g @vue/cli
+
+
+0.3 以 SQL Server Management Studio 連線 .\SQLExpress，
+    看看是否有之前的練習所建立的 todoItemDb 資料庫，
+    如果沒有，請先進行之前的練習:
+    Lab_MVC_ToDo, 步驟 1~3
+    Lab_MVC_ToDo_HandMake, 步驟 1~3
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+0.4 以瀏覽器連到下列網址:
+    https://marketplace.visualstudio.com/items?itemName=alexandredotnet.vuejsdotnetfive
+
+    下載並安裝 Vue JS 3.0 with .NET 5 Web API 專案範本
+
+
+0.5 下載並安裝 Postman
+    https://www.postman.com/downloads/
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 選擇 VueJS 3.0 with .NET 5<下一步>
+
+1.4 專案名稱: Lab_WebAPI_Todo <建立>
+
+<Note>
+如果無法安裝 Vue JS 3.0 with .NET 5 Web API
+請在 Visual Studio | 檔案 | 開啟 | 專案/方案
+開啟本次練習 start 子資料內的方案
+
+
+
+
+2.  建立資料模型與資料內容類別
+
+
+2.1 滑鼠右鍵點按專案，加入 | 新增資料夾
+    名稱: Models
+
+
+2.2 工具 | NuGet 套件管理員 | 套件管理器主控台
+    依序輸入下列指令:
+
+Install-Package Microsoft.EntityFrameworkCore.Tools
+install-package Microsoft.EntityFrameworkCore.SqlServer
+Scaffold-DbContext "Server=.\sqlexpress;Database=todoItemDb;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+
+
+2.3 開啟 Models/todoItemDbContext.cs，
+    將 OnConfiguring() 整個設為註解或刪除
+
+
+2.4 開啟 appSettings.json，加入 ConnectionStrings 屬性
+    "ConnectionStrings": {
+      "linkToTodoItemDb": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    }
+
+    完成後的 appSettings.json:
+    {
+    "Logging": {
+        "LogLevel": {
+        "Default": "Information",
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information"
+        }
+    },
+    "ConnectionStrings": {
+        "linkToTodoItemDb": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    },
+    "AllowedHosts": "*"
+    }
+
+
+2.5 開啟 Startup.cs，加入 using 參照:
+    using Microsoft.EntityFrameworkCore;
+    using Lab_WebAPI_Todo.Models;
+
+
+2.6 一樣是Startup.cs，找到 ConfigureServices()，
+    加入下列程式到 ConfigureServices() 的第一行:
+      services.AddDbContext<todoItemDbContext>(options =>
+          options.UseSqlServer(Configuration.GetConnectionString("linkToTodoItemDb")));
+
+
+2.7 建置 | 重建方案
+
+
+
+
+3.  建立控制器(Controller)
+
+
+3.1 滑鼠右鍵點按 Controllers 資料夾 ｜ 加入 | 控制器
+    
+    - 分類: API
+    - 選擇：API 控制器 - 空白 <加入>
+    - 名稱: TodoItemController.cs
+    <新增>
+
+    <Note>
+    請留意一下自動產生的程式碼
+    有關於 TodoItemController 類別的屬性設定:
+    [Route("api/[controller]")]
+    [ApiController]
+
+
+3.2 在 TodoItemController.cs，加入下列 using 參照:
+    using Microsoft.EntityFrameworkCore;
+    using Lab_WebAPI_Todo.Models;
+
+
+3.3 在 TodoItemController.cs，
+    加入下列程式到 TodoItemController 類別
+
+    private todoItemDbContext _context;
+    
+    public TodoItemController(todoItemDbContext dbContext) {
+        _context = dbContext;
+    }
+
+
+
+
+4.  實作 HTTP GET 方法，查詢資料
+
+
+4.1 在 TodoItemController.cs，
+    加寫下列程式到 TodoItemController 類別
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItemList() {
+        return await _context.TodoItems.ToListAsync();
+    }
+
+
+4.2 Ctrl + F5 執行程式，將網址改成:
+    http://localhost:埠號/api/todoitem
+    例如:
+    http://localhost:50598/api/todoitem
+
+
+4.3 繼續加寫下列程式到 TodoItemController 類別
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TodoItem>> GetTodoItem(long id) {
+        var todoItem = await _context.TodoItems.FindAsync(id);
+
+        if (todoItem == null) {
+            return NotFound();
+        }
+
+        return todoItem;
+    }
+
+
+4.4 Ctrl + F5 執行程式，將網址改成:
+    http://localhost:埠號/api/todoitem/1
+    例如:
+    http://localhost:50598/api/todoitem/1
+
+
+
+
+5.  實作 HTTP POST 方法，新增資料
+
+
+5.1 在 TodoItemController.cs，
+    加寫下列程式到 TodoItemController 類別
+
+    [HttpPost]
+    public async Task<ActionResult<TodoItem>> PostTodoItem(TodoItem todoItem) {
+        _context.TodoItems.Add(todoItem);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(
+            "GetTodoItem", 
+            new { id = todoItem.TodoItemId }, 
+            todoItem);
+    }
+
+
+5.2 Ctrl + F5 執行程式
+
+
+5.3 啟動 Postman，新增一個 HTTP Request，
+    操作提示與重點:
+    - Request: taskPost
+    - 選擇或新增一個 Collection: Lab
+    - HTTP 方法的下拉式選單: POST
+    - 網址: http://localhost:埠號/api/todoitem
+      例如:
+      http://localhost:50598/api/todoitem
+    - Body / raw / 選 json
+    - 內容: {"name":"Job A1","isComplete":false}
+    <Send>
+
+
+5.4 閱讀 Postman 回應區的 Headers 與 Body
+    Headers 區，應該有一個 Location 標頭，內容類似:
+    http://localhost:50598/api/TodoItem/7
+
+
+5.5 以瀏覽器，連接步驟 5.4 找到的網址，或者:
+    http://localhost:埠號/api/todoitem
+    例如:
+    http://localhost:50598/api/todoitem
+    確認一下剛才的 Job A1 已新增
+
+
+
+
+6.  實作 HTTP PUT 方法，修改資料
+
+
+6.1 在 TodoItemController.cs，
+    加寫下列程式到 TodoItemController 類別
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutTodoItem(long id, TodoItem todoItem) {
+        _context.Entry(todoItem).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+
+6.2 Ctrl + F5 執行程式
+
+
+6.3 啟動 Postman，新增一個 HTTP Request，
+    操作提示與重點:
+    - Request: taskPut
+    - 選擇 Collection: Lab
+    - HTTP 方法的下拉式選單: PUT
+    - 網址: http://localhost:埠號/api/todoitem/1
+      例如:
+      http://localhost:50598/api/todoitem/1
+    - Body / raw / 選 json
+    - 內容: {"todoItemId":1,"name":"Job AA","isComplete":true}
+    <Send>
+
+
+6.4 閱讀 Postman 回應區的 Headers 與 Body
+
+
+6.5 以瀏覽器，連接:
+    http://localhost:埠號/api/todoitem
+    例如:
+    http://localhost:50598/api/todoitem
+    確認一下剛才 #1 的資料已成功修改
+
+
+
+
+7.  實作 HTTP DELETE 方法，刪除資料
+
+
+7.1 在 TodoItemController.cs，
+    加寫下列程式到 TodoItemController 類別
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<TodoItem>> DeleteTodoItem(long id) {
+        var todoItem = await _context.TodoItems.FindAsync(id);
+        if (todoItem == null) {
+            return NotFound();
+        }
+
+        _context.TodoItems.Remove(todoItem);
+        await _context.SaveChangesAsync();
+
+        return todoItem;
+    }
+
+
+7.2 Ctrl + F5 執行程式
+
+
+7.3 啟動 Postman，新增一個 HTTP Request，
+    操作提示與重點:
+    - Request: taskDelete
+    - 選擇 Collection: Lab
+    - HTTP 方法的下拉式選單: PUT
+    - 網址: http://localhost:埠號/api/todoitem/1
+      例如:
+      http://localhost:50598/api/todoitem/1
+    <Send>
+
+
+7.4 閱讀 Postman 回應區的 Headers 與 Body
+
+
+7.5 以瀏覽器，連接:
+    http://localhost:埠號/api/todoitem
+    例如:
+    http://localhost:50598/api/todoitem
+    確認一下剛才 #1 的資料已消失
+
+
+
+
+8.  以 Vue.js 搭配 Axios 實作 Client App
+
+
+8.1 在檔案總管，複製 Vue 資料夾內的 src 資料夾
+
+
+8.2 在 Visual Studio 的方案總管，
+    右鍵點按 ClientApp 資料夾
+    貼上並覆蓋 src 資料夾
+
+
+8.3 Ctrl + F5 啟動應用程式
+    點按右上角導覽列的 Todo
+
+
+8.4 檢視研究一下 
+    ClientApp/src/components/TodoIndex.vue 
+    與其他 *.vue 的寫法
+    

@@ -1,0 +1,682 @@
+Lab: 以 ASP.NET Core 建立 MVC Web App
+
+- 之前 Lab_MVC_ToDo 的續集，
+  再做一遍待辦事項清單的增查修刪
+
+- 我們會透過
+    - 放慢速著眼細節
+    - 嘗試不同作法
+    - 手作（不用 Scaffold 快速建立控制項與檢視）
+  學習如何從無到有建構出 MVC Web 應用程式
+
+- 同一套功能，另有 Web API 版實作前後端分離的架構，
+  歡迎稍後也做一遍。
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_MVC_ToDo_HandMake <下一步>
+
+1.6 目標Framework: .NET 5 
+    <建立>
+
+
+
+
+2.  建立資料模型、資料內容類別
+
+
+2.1 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: TodoItem
+    <新增>
+
+
+2.2 TodoItem.cs 的檔案內容:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+
+
+namespace Lab_MVC_ToDo_HandMake.Models {
+    public class TodoItem {
+        [Key]
+        public long TodoItemId { get; set; }
+        public string Name { get; set; }
+    }
+}
+
+
+2.3 以 SQL Server Management Studio 連線 .\SQLExpress，
+    如果有之前建立的 todoItemDb 資料庫，
+    請以 drop database todoItemDb
+    或
+    滑鼠右鍵 todoItemDb | 刪除
+
+    <Note>
+    如果使用的是 locadb，則連結:
+    Server=(localdb)\MSSQLLocalDB
+
+
+2.4 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+    Install-Package Microsoft.EntityFrameworkCore.SqlServer
+
+
+2.5 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: TodoContext
+    <新增>
+
+
+2.6 TodoContext.cs 的檔案內容:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lab_MVC_ToDo_HandMake.Models {
+    public class TodoContext : DbContext {
+        public TodoContext(DbContextOptions<TodoContext> options)
+            : base(options) {
+
+        }
+
+        public DbSet<TodoItem> TodoItems { get; set; }
+    }
+}
+
+
+2.7 開啟 Startup.cs，加入下列 using 參照:
+
+    using Lab_MVC_ToDo_HandMake.Models;
+    using Microsoft.EntityFrameworkCore;
+
+
+2.8 一樣是 Startup.cs，找到 ConfigureServices()，改成:
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllersWithViews();
+        services.AddDbContext<TodoContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("TodoContext")));
+
+    }
+
+
+2.9 開啟 appSettings.json，加入 ConnectionStrings 屬性:
+
+    "ConnectionStrings": {
+      "TodoContext": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    }
+
+    完成後的 appSettings.json 類以這樣:
+    {
+    "Logging": {
+        "LogLevel": {
+        "Default": "Information",
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information"
+        }
+    },
+    "ConnectionStrings": {
+        "TodoContext": "Server=.\\sqlexpress;Database=todoItemDb;Integrated Security=True;"
+    },
+    "AllowedHosts": "*"
+    }
+
+    <Note>
+    如果使用的是 locadb
+    "Server=(localdb)\\MSSQLLocalDB;Database=todoItemDb;Integrated Security=True;"
+
+
+2.a 建置 | 重建方案，確認專案可成功編譯無錯誤訊息。
+
+
+
+
+3.  建立 SQL Server 資料庫
+
+
+3.1 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+    Install-Package Microsoft.EntityFrameworkCore.Tools
+
+
+3.2 繼續在套件管理器主控台輸入下列指令:
+    Add-Migration InitialCreate
+
+
+3.3 瀏覽專案多出來的 Migrations 資料夾
+
+
+3.4 在 SQL Server Management Studio 
+    觀察資料庫是否有 todoItemDb? 否
+
+
+3.5 繼續在套件管理器主控台輸入下列指令:
+    Update-Database
+
+
+3.4 在 SQL Server Management Studio 
+    觀察資料庫是否有 todoItemDb? 是
+
+
+3.6 開啟 Models/TodoItem.cs，針對 TodoItem 類別，
+    加入第三個屬性:
+
+    public bool IsComplete { get; set; }
+
+
+3.7 繼續在套件管理器主控台輸入下列指令:
+
+    Add-Migration TodoItemAddIsComplete
+    Update-Database
+
+
+3.8 觀察專案的 Migrations 資料夾有何變化
+
+
+3.9 在 SQL Server Management Studio 
+    觀察 todoItemDb 資料庫的 TodoItems 資料表
+    其資料結構有何變化?
+
+
+3.a 如果時間許可，請繼續試一下先只輸入:
+    Update-database InitialCreate
+    觀察資料庫的結構是否倒退回只有 Id, Name 的版本
+
+
+3.b 繼續輸入
+    Update-Database TodoItemAddIsComplete
+    或者
+    Update-Database
+
+    <Note>
+    提醒一下，如果系統已運作一段時間，
+    若將結構倒回之前的版本，資料會不見或損失!
+
+
+
+
+4.  建立控制器(Controller)
+
+
+4.1 滑鼠右鍵點按 Controllers 資料夾 ｜ 加入 | 控制器
+    選擇：MVC 控制器 - 空白
+    <加入>
+    名稱: TodoController.cs
+    <新增>
+
+
+4.2 在 Controllers/TodoController.cs，加入下列 using 參用:
+    using Lab_MVC_ToDo_HandMake.Models;
+
+
+4.3 加入下列程式到 TodoController 類別:
+
+    private readonly TodoContext _context;
+
+    public TodoController(TodoContext context) {
+        _context = context;
+    }
+
+
+4.4 修改 Startup.cs，將 UseEndPoints 中的 {controller=Home}
+    改成 {controller=Todo}，方便稍後測試程式。
+
+
+
+
+5.  調閱並顯示待辦事項清單
+
+
+5.1 在 SQL Server Management Studio，
+    滑鼠右鍵點按 TodoItems 資料表 | 編輯前兩百個資料列
+    輸入三筆資料，例如 Job A, Job B, Job C
+
+
+5.2 在 Controllers/TodoController.cs，
+    修改 Index() 的程式，如下:
+
+    public IActionResult Index() {
+        var viewModel = _context.TodoItems.ToList();
+        return View(viewModel);
+    }    
+
+
+5.3 滑鼠右鍵程式編輯器內的 Index() | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    在「新增 Razor 檢視」對話盒: 
+    名稱: Index
+    <新增>
+
+
+5.4 修改 Views/Todo/Index.cshtml 的內容，如下:
+
+    <h1>
+        待辦事項清單
+        <a href="/Todo/Create" class="btn btn-outline-success btn-md float-right">
+            新增
+        </a>
+    </h1>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>
+                    項目名稱
+                </th>
+                <th>
+                    是否已完工
+                </th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    Job A
+                </td>
+                <td>
+                    <input class="check-box" disabled="disabled"
+                        type="checkbox" />
+                </td>
+                <td>
+                    <span class="float-right">
+                        <a href="/Todo/Edit/1" class="btn btn-outline-primary btn-sm">編輯</a> |
+                        <a href="/Todo/Delete/1" class="btn btn-outline-danger btn-sm">刪除</a>
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+5.5 Ctrl + F5 執行程式，
+    (網址改成 /Todo/Index)
+    目前只有一筆靜態資料
+
+
+5.6 修改 Views/Todo/Index.cshtml，第一行加入:
+    @model List<Lab_MVC_ToDo_HandMake.Models.TodoItem>
+
+
+5.7 修改 Views/Todo/Index.cshtml，
+    用 foreach 迭代 Model 的每個項目並輸出多個 <tr></tr>，
+    例如:
+
+    <tbody>
+        @{
+            foreach (var item in Model) {
+                <tr>
+                    <td>
+                        Job A
+                    </td>
+                    <td>
+                        <input class="check-box" disabled="disabled"
+                            type="checkbox" />
+                    </td>
+                    <td>
+                        <span class="float-right">
+                            <a href="/Todo/Edit/1" class="btn btn-outline-primary btn-sm">編輯</a> |
+                            <a href="/Todo/Delete/1" class="btn btn-outline-danger btn-sm">刪除</a>
+                        </span>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+
+
+5.8 Ctrl + F5 執行程式，目前雖有三筆，
+    但內容仍為樣版的靜態資料
+
+
+5.9 修改 Views/Todo/Index.cshtml，
+    用 @item.XXX 輸出資料與屬性值，
+    如下:
+
+    @model List<Lab_MVC_ToDo_HandMake.Models.TodoItem>
+    <h1>
+        待辦事項清單
+        <a href="/Todo/Create" class="btn btn-outline-success btn-md float-right">
+            新增
+        </a>
+    </h1>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>
+                    項目名稱
+                </th>
+                <th>
+                    是否已完工
+                </th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                foreach (var item in Model) {
+                    <tr>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            <input class="check-box" disabled="disabled"
+                                type="checkbox" 
+                                @( (item.IsComplete) ? "checked" : "" )
+                                />
+                        </td>
+                        <td>
+                            <span class="float-right">
+                                <a href="/Todo/Edit/@item.TodoItemId" class="btn btn-outline-primary btn-sm">編輯</a> |
+                                <a href="/Todo/Delete/@item.TodoItemId" class="btn btn-outline-danger btn-sm">刪除</a>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            }
+
+        </tbody>
+    </table>
+
+
+5.a Ctrl + F5 執行程式
+
+
+
+
+6.  新增資料
+
+
+6.1 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    public IActionResult Create() {
+        return View();
+    } 
+
+
+6.2 滑鼠右鍵程式編輯器內的 Create() | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    在「新增 Razor 檢視」對話盒: 
+    名稱: Create
+    <新增>
+
+
+6.3 修改 Views/Todo/Create.cshtml 的內容，如下:
+
+    <h1>待辦事項清單 - 新增</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form action="/Todo/Create" method="post">
+
+                <div class="form-group">
+                    <label class="control-label" for="Name">項目名稱</label>
+                    <input class="form-control" type="text" id="Name"
+                        name="Name" value="" />
+                </div>
+                <div class="form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" id="IsComplete"
+                            name="IsComplete" value="true" /> 是否已完工
+                    </label>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="確定" class="btn btn-outline-primary" /> |
+                    <a href="/Todo/Index" class="btn btn-outline-info">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+6.4 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    [HttpPost]
+    public IActionResult Create(TodoItem item) {
+        _context.TodoItems.Add(item);
+        _context.SaveChanges();
+        return Redirect("/Todo/Index");
+    }
+    
+
+6.5 Ctrl + F5 啟動 Web 應用程式
+    點按<新增>按鈕，
+    輸入資料後，點按<確定>按鈕
+
+
+
+
+7.  修改資料
+
+
+7.1 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    public IActionResult Edit(long? id) {
+        var todoItem = _context.TodoItems.Find(id);
+        return View(todoItem);
+    }
+
+
+7.2 滑鼠右鍵程式編輯器內的 Edit() | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    在「新增 Razor 檢視」對話盒: 
+    名稱: Edit
+    <新增>
+
+
+7.3 修改 Views/Todo/Edit.cshtml 的內容，如下:
+
+    <h1>待辦事項清單 - 修改</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form action="/Todo/Edit" method="post">
+
+                <input type="hidden" id="TodoItemId"
+                    name="TodoItemId" value="1" />
+                <div class="form-group">
+                    <label class="control-label" for="Name">項目名稱</label>
+                    <input class="form-control" type="text"
+                        id="Name" name="Name" value="Job A" />
+                </div>
+                <div class="form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox"
+                            id="IsComplete" name="IsComplete"
+                            value="true" /> 是否已完工
+                    </label>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="確定" class="btn btn-outline-primary" /> |
+                    <a href="/Todo/Index" class="btn btn-outline-info">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+7.4 繼續修改 Views/Todo/Edit.cshtml 的內容，如下:
+
+    @model Lab_MVC_ToDo_HandMake.Models.TodoItem
+    <h1>待辦事項清單 - 修改</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form action="/Todo/Edit" method="post">
+
+                <input type="hidden" id="TodoItemId"
+                    name="TodoItemId" value="@Model.TodoItemId" />
+                <div class="form-group">
+                    <label class="control-label" for="Name">項目名稱</label>
+                    <input class="form-control" type="text"
+                        id="Name" name="Name" value="@Model.Name" />
+                </div>
+                <div class="form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox"
+                            id="IsComplete" name="IsComplete"
+                            value="true"
+                            @( (Model.IsComplete) ? "checked" : "")
+                            /> 是否已完工
+                    </label>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="確定" class="btn btn-outline-primary" /> |
+                    <a href="/Todo/Index" class="btn btn-outline-info">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+7.5 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    [HttpPost]
+    public IActionResult Edit(TodoItem clientItem) {
+        var todoItem = _context.TodoItems.Find(clientItem.TodoItemId);
+        todoItem.Name = clientItem.Name;
+        todoItem.IsComplete = clientItem.IsComplete;
+        _context.SaveChanges();
+        return Redirect("/Todo/Index");
+    }
+
+
+7.6 Ctrl + F5 啟動 Web 應用程式
+    點按任一筆的<修改>按鈕，
+    輸入資料後，點按<確定>按鈕
+
+
+
+
+8.  刪除資料
+
+
+8.1 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    public IActionResult Delete(long? id) {
+        var todoItem = _context.TodoItems.Find(id);
+        return View(todoItem);
+    }
+
+
+8.2 滑鼠右鍵程式編輯器內的 Delete() | 新增檢視
+    選擇: Razor 檢視
+    <加入>
+    在「新增 Razor 檢視」對話盒: 
+    名稱: Delete
+    <新增>
+
+
+8.3 修改 Views/Todo/Delete.cshtml 的內容，如下:
+
+    <h1>待辦事項清單 - 刪除</h1>
+
+    <hr />
+    <div>
+        <dl class="row">
+            <dt class = "col-sm-2">
+                項目名稱
+            </dt>
+            <dd class = "col-sm-10">
+                Job A
+            </dd>
+            <dt class = "col-sm-2">
+                是否已完工
+            </dt>
+            <dd class = "col-sm-10">
+                <input class="check-box" disabled="disabled" 
+                type="checkbox" />
+            </dd>
+        </dl>
+        
+        <hr>
+        <h3>確定要刪除這筆資料嗎?</h3>
+
+        <form action="/Todo/Delete" method="post">
+            <input type="hidden" id="TodoItemId" name="TodoItemId" 
+                value="1" 
+            />
+            <input type="submit" value="確定" class="btn btn-outline-danger" /> |
+            <a href="/Todo/Index" class="btn btn-outline-info">取消</a>
+    </div>
+
+
+8.4 繼續修改 Views/Todo/Delete.cshtml 的內容，如下:
+
+    @model Lab_MVC_ToDo_HandMake.Models.TodoItem
+
+    <h1>待辦事項清單 - 刪除</h1>
+
+    <hr />
+    <div>
+        <dl class="row">
+            <dt class="col-sm-2">
+                項目名稱
+            </dt>
+            <dd class="col-sm-10">
+                @Model.Name
+            </dd>
+            <dt class="col-sm-2">
+                是否已完工
+            </dt>
+            <dd class="col-sm-10">
+                <input class="check-box" disabled="disabled" type="checkbox"
+                    @( (Model.IsComplete) ? "checked" : "")
+                />
+            </dd>
+        </dl>
+
+        <hr>
+        <h3>確定要刪除這筆資料嗎?</h3>
+
+        <form action="/Todo/Delete" method="post">
+            <input type="hidden" id="TodoItemId" name="TodoItemId" 
+                value="@Model.TodoItemId" />
+            <input type="submit" value="確定" class="btn btn-outline-danger" /> |
+            <a href="/Todo/Index" class="btn btn-outline-info">取消</a>
+        </form>
+    </div>
+
+
+8.5 在 Controllers/TodoController.cs，
+    加入下列 EndPoint:
+
+    [HttpPost]
+    public IActionResult Delete(long TodoItemId) {
+        var todoItem = _context.TodoItems.Find(TodoItemId);
+        _context.TodoItems.Remove(todoItem);
+        _context.SaveChanges();
+        return Redirect("/Todo/Index");
+    }
+
+
+8.6 Ctrl + F5 啟動 Web 應用程式
+    點按任一筆的<修改>按鈕，
+    輸入資料後，點按<確定>按鈕
+

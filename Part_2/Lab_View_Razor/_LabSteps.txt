@@ -1,0 +1,274 @@
+Lab: 使用 Razor 語法
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Controller)<下一步>
+
+1.5 專案名稱: Lab_View_Razor <下一步>
+
+1.6 目標Framework: .NET 5
+    驗證類型: 無
+    針對 HTTPS 進行設定，勾選 
+    <建立>
+
+
+
+
+2.  準備資料
+
+
+2.1 滑鼠右鍵點按 Models 資料夾 | 加入 | 類別
+    名稱: Student
+    <新增>
+
+
+2.2 Student.cs 的內容如下:
+
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    namespace Lab_View_Razor.Models {
+        public class Student {
+            public int Id;
+            public string Name;
+            public int Score;
+        }
+    }
+
+
+2.3 開啟 Controllers/HomeController.cs
+
+
+2.4 修改 Index()，如下:
+
+    public IActionResult Index() {
+        ViewData["userName"] = "Chien";
+        ViewData["twoLines"] = "Line1<br>Line2";
+        Student[] studentList = new Student[] {
+            new Student() { Id = 2, Name = "Jeter", Score = 92 },
+            new Student() { Id = 7, Name = "Jeremy", Score = 97 },
+            new Student() { Id = 8, Name = "Someone", Score = 50 }
+        };
+        return View(studentList);
+    }
+
+
+
+
+3.  輸出內容
+
+
+3.1 滑鼠右鍵程式編輯器中的 Index() | 移至檢視
+    將 Index.cshtml 的內容整個改成:
+
+    @{
+        ViewData["Title"] = "Home Page";
+        // TODO: Lab Step 3.2
+
+    }
+
+    <!-- TODO: Lab Step 5.2 -->
+
+    <div class="container">
+        <div class="row">
+            <!-- 左側: -->
+            <div class="col-4">
+
+            </div>
+            <!-- 中間: -->
+            <div class="col-4">
+                <ul>
+                    <li>StudentName, Score: 99</li>
+                </ul>
+            </div>
+            <!-- 右側: -->
+            <div class="col-4">
+                <ul>
+                    <li>StudentName, Score: 100</li>
+                </ul>
+            </div>
+        </div>
+
+
+    </div>
+
+
+3.2 找到 // TODO: Lab Step 3.2 註解處，撰寫下列程式:
+    var userName = ViewData["userName"] ?? "Guest";
+
+
+3.3 在 <!-- 左側: --> 那欄的 <div> 中，撰寫下列程式:
+    <h3>Hello! @userName </h3>
+
+
+3.4 Ctrl + F5 啟動 Web 應用程式
+
+
+3.5 繼續在 <!-- 左側: --> 那欄的 <div> 中，添加下列程式:
+    <div>@ViewData["twoLines"]</div>
+
+
+3.6 Ctrl + F5 啟動 Web 應用程式
+    <Note>請問如何顯示成兩行而非出現 <br> 字樣?
+
+
+3.7 繼續在 <!-- 左側: --> 那欄的 <div> 中，添加下列程式:
+    <div>@Html.Raw(ViewData["twoLines"])</div>
+
+    <Note>
+    這次會顯示成兩行了，不過，這樣子有何資訊安全疑慮嗎?
+
+
+
+
+4.  使用 if 敘述
+
+
+4.1 繼續在 <!-- 左側: --> 那欄的 <div> 中，添加下列程式:
+
+    @{
+        if (userName?.ToString() == "Guest") {
+            <a href="/Member/Login">Login</a>
+        } else {
+            <a href="/Member/Index">Member Center</a>
+        }
+    }
+
+
+4.2 Ctrl + F5 啟動 Web 應用程式
+
+
+
+
+5.  使用迴圈敘述
+
+
+5.1 在 Index.cshtml 的最頂端，加寫 @model 宣告
+    @model Lab_View_Razor.Models.Student[]
+
+    <Note> 上述一行，也可以寫成:
+    @using Lab_View_Razor.Models;
+    @model Student[]
+
+
+5.2 在 <!-- TODO: Lab Step 5.2 --> 那邊，
+    加入下列美術樣式宣告:
+
+    <!-- TODO: Lab Step 5.2 -->
+    <style>
+        .fail {
+            color: red;
+        }
+    </style>
+
+
+5.3 在 <!-- 中間: --> 那欄的 <div> ，將 <ul> 改成:
+
+    <ul>
+        @{
+            foreach (var student in Model) {
+                <li>@student.Name, @student.Score</li>
+            }
+        }
+    </ul>
+
+
+5.4 如果: 分數低於60分的學生，要以紅字標示出來，
+    請問程式該怎麼寫?
+
+(防雷頁)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5.5 可能的寫法一:
+
+    <ul>
+        @{
+            foreach (var student in Model) {
+                if (student.Score < 60) {
+                    <li class="fail">@student.Name, @student.Score</li>
+                } else {
+                    <li>@student.Name, @student.Score</li>
+                }
+
+            }
+        }
+    </ul>
+
+
+5.6 可能的寫法二:
+
+    <ul>
+        @{
+            foreach (var student in Model) {
+                <li class="@((student.Score < 60) ? "fail" : "")">@student.Name, @student.Score</li>
+            }
+        }
+    </ul>
+
+
+5.7 針對上述兩款，你比較喜歡哪一種? 請與同學討論看看。
+
+
+5.8 修改 Models/Student.cs，新的 class 內容如下:
+
+    public class Student {
+        public int Id;
+        public string Name;
+        public int Score;
+        public string ClassName;
+    }
+
+5.9 開啟 Controllers/HomeController.cs，修改 Index()，內容如下:
+
+    public IActionResult Index() {
+        ViewData["userName"] = "Chien";
+        ViewData["twoLines"] = "Line1<br>Line2";
+        Student[] studentList = new Student[] {
+            new Student() { Id = 2, Name = "Jeter", Score = 92, ClassName = "pass" },
+            new Student() { Id = 7, Name = "Jeremy", Score = 97, ClassName = "pass"},
+            new Student() { Id = 8, Name = "Someone", Score = 50, ClassName = "fail" }
+        };
+        return View(studentList);
+    }
+
+
+5.a 開啟 Views/Home/HomeIndex.cshtml
+
+
+5.b 在 <!-- 右側: --> 那欄的 <div> ，將 <ul> 改成:
+
+    <ul>
+        @{
+            foreach (var student in Model) {
+                <li class="@student.ClassName">@student.Name, @student.Score</li>
+            }
+        }
+    </ul>
+
