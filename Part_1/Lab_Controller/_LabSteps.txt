@@ -17,7 +17,7 @@ Lab: 在 ASP.NET Core 寫作 Controller
 
 1.6 目標Framework: .NET 5
     驗證類型: 無
-    針對 HTTPS 進行設定，勾選 
+    針對 HTTPS 進行設定，勾選
     <建立>
 
 
@@ -132,4 +132,6 @@ Lab: 在 ASP.NET Core 寫作 Controller
         public ActionResult TestID(string id) {
             return Content("ID: " + id);
         }
+
+
 

@@ -1,0 +1,3 @@
+本課堂練習圖檔源自 Christophe Coenraets 先生的 jQuery Mobile 示範範例，
+網址: http://coenraets.org/blog/2011/11/jquery-mobile-getting-started-application/
+

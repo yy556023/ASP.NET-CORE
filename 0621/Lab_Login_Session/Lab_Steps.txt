@@ -1,0 +1,219 @@
+Lab: 以 Session 實作使用者登入系統
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Conroller) <下一步>
+
+1.5 專案名稱: Lab_Login_Session <下一步>
+
+1.6 目標Framework: .NET 5
+    <建立>
+
+
+
+
+2.  建立 EndPoint 與 View 操作畫面
+
+
+2.1 開啟 Views/Shared/_Layout.cshtml
+    Privacy 選單項目的後面(仍在UL裡面)，
+    加入下列兩個選單項目
+
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">Login</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="MemberCenter">MemberCenter</a>
+    </li>
+
+
+2.2 在 controllers/HomeController.cs，
+    於 HomeController 類別加入下列 EndPoint:
+
+    public IActionResult Login() {
+        return View();
+    }
+
+
+2.3 滑鼠右鍵點按 Login() | 新增檢視
+    Razor 檢視 <加入><新增>
+    將 Login.cshtml 改成:
+
+    <h3>Login</h3>
+
+    <div class="row">
+        <div class="col-md-4">
+            <form method="post" action="/Home/Login">
+
+                <div class="form-group">
+                    <label class="control-label" for="UserName">帳號</label>
+                    <input class="form-control" type="text" id="UserName"
+                        name="UserName" value="" />
+                </div>
+                <div class="form-group">
+                    <label class="control-label" for="Password">密碼</label>
+                    <input class="form-control" type="password" id="Password"
+                        name="Password" value="" />
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="確定" class="btn btn-outline-primary" /> |
+                    <a href="/Home/Index" class="btn btn-outline-info">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+2.4 在 controllers/HomeController.cs，
+    於 HomeController 類別加入下列 EndPoint:
+
+    public IActionResult MemberCenter() {
+        return View();
+    }
+
+
+2.5 滑鼠右鍵點按 MemberCenter() | 新增檢視
+    Razor 檢視 <加入><新增>
+    將 MemberCenter.cshtml 改成:
+
+    <h3>Member Center</h3>
+    <p>Content for member only.</p>
+
+
+2.6 Ctrl + F5，啟動 Web 應用程式
+    試點一下 Login、Member Center 等超連結
+    
+    <Note>
+    請想一下，該如何控管:
+    只有登入過的使用者才可使用 Member Center
+
+
+
+
+3.  處理 Login 的 POST 事件
+
+
+3.1 在 startup.cs，修改 ConfigureServices()，
+    加入下列這行:
+    services.AddSession();
+
+
+3.2 在 startup.cs，修改 Configure()，
+    加入下列這行: (至少需在 app.UseEndpoints() 之前)
+
+    app.UseSession();
+
+
+3.3 在 controllers/HomeController.cs，
+    於 HomeController 類別加入下列 EndPoint:
+
+    [HttpPost]
+    public IActionResult Login(string userName, string password) {
+        return Content($"userName: {userName}, password: {password}");
+    }
+
+
+3.4 Ctrl + F5 啟動 Web 應用程式
+    點按導覽列的 Login，
+    輸入帳號、密碼，<確定>
+    觀察程式可否順利收到 userName, password
+
+
+3.5 繼續修改 [HttpPost] 那邊的 Login()，如下:
+
+    [HttpPost]
+    public IActionResult Login(string userName, string password) {
+        if (string.IsNullOrEmpty(userName)) {
+            return View();
+        }
+        HttpContext.Session.SetString("userName", userName);
+        return Redirect("/Home/Index");
+    }
+
+    <Note>
+    需補上的 using 參照:
+    using Microsoft.AspNetCore.Http;
+
+
+3.6 在 controllers/HomeController.cs，
+    修改 MemberCenter() :
+
+    public IActionResult MemberCenter() {
+        string userName = HttpContext.Session.GetString("userName") ?? "Guest";
+        if (userName == "Guest") {
+            return Redirect("/Home/Index");
+        }
+        return View();
+    }
+
+
+3.7 Ctrl + F5，啟動 Web 應用程式
+    先試試看直接 Member Center，
+    然後試用登入後可否順利連結 Member Center
+
+    <Note>
+    使用瀏覽器的開發人員工具，
+    檢視 Application / Cookie 的內容
+    看看是否有下列 Cookie 項目:
+    .AspNetCore.Session
+
+
+
+
+4.0 導覽列以及登出功能
+
+
+4.1 開啟 startup.cs，加入下列 using 參照:
+    using Microsoft.AspNetCore.Http;
+
+
+4.2 在 startup.cs，修改 ConfigureServices()，
+    加入下列這行:
+    services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+
+4.3 開啟 Views/Shared/_Layout.cshtml，
+    加入下列程式到檔案的開頭處:
+
+    @using Microsoft.AspNetCore.Http
+    @inject Microsoft.AspNetCore.Http.IHttpContextAccessor hca
+    @{
+        string userName = hca.HttpContext.Session.GetString("userName") ?? "Guest";
+    }
+
+
+4.4 針對 Login 那個 <li>，改成這樣:
+
+    <li class="nav-item">
+        @{
+            if (userName == "Guest") {
+                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Login">Login</a>
+            } else {
+                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Logout">Log out</a>
+            }
+        }
+    </li>
+
+
+4.5 在 controllers/HomeController.cs
+    加入下列 EndPoint 到 HomeController 類別:
+    
+    public IActionResult Logout() {
+        HttpContext.Session.Remove("userName");
+        return Redirect("/Home/Index");
+    }
+
+
+4.6 Ctrl + F5，啟動 Web 應用程式
+    試用登入、登出功能
+

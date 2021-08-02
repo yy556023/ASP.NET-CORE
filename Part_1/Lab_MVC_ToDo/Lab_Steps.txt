@@ -137,7 +137,7 @@ namespace Lab_MVC_ToDo.Models {
 Install-Package Microsoft.EntityFrameworkCore.Tools
 Add-Migration InitialCreate
 Update-Database
-
+ 
 
 3.2 啟動 SQL Server Management Studio
 

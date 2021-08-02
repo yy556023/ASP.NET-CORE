@@ -1,0 +1,92 @@
+Lab: 使用 ASP.NET Core 的 Identity 進行驗證與授權
+
+
+
+
+1.  建立新專案
+
+1.1 啟動 Visual Studio
+
+1.2 點按<建立新的專案>選項
+
+1.3 上方三個下拉式選單，分別選擇: C#、所有平台、Web
+
+1.4 選擇 ASP.NET Core Web 應用程式 (Model-View-Conroller) <下一步>
+
+1.5 專案名稱: Lab_Identity <下一步>
+
+1.6 目標Framework: .NET 5
+
+1.7 驗證類型: 個別帳戶
+    <建立>
+
+
+
+
+2.  建立資料庫
+
+
+2.1 開啟 appsettings.json，修改連線設定。
+
+    預設是: Server=(localdb)\\mssqllocaldb;
+    如果使用 SQLExpress，改成:
+    Server=.\\sqlexpress;
+
+
+2.2 工具 | NuGet 套件管理員 | 套件管理器主控台
+    輸入下列指令:
+    update-database
+
+
+2.3 啟動 SQL Server Management Studio
+
+
+2.4 連線到 .\SQLExpress，
+
+
+2.5 檢視其中是否有下列資料庫:
+    aspnet-Lab_Identity-十六進位亂數
+
+
+
+
+3.  設定授權
+
+
+3.1 開啟 controllers/HomeController.cs
+
+
+3.2 加入下列 using 參照:
+    using Microsoft.AspNetCore.Authorization;
+
+
+3.3 針對 Privacy()，加上 [Authorize] 屬性
+
+
+3.4 開啟 startup.cs，檢視 Configure() 的 pipeline 內容，
+    特別是下列兩行:
+    app.UseAuthentication();
+    app.UseAuthorization();    
+
+
+
+
+4.  註冊帳號、登入
+
+
+4.1 Ctrl + F5 啟動 Web 應用程式
+
+
+4.2 點按導覽列的 Privacy 連結
+    <Note>應該是點不進去，會被重導到登入頁
+
+
+4.3 點按右上角的 Register，
+    註冊申請一個帳號
+
+
+4.3 以新帳號登入
+
+
+4.4 再點按導覽列的 Privacy 連結
+

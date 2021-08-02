@@ -1,0 +1,13 @@
+﻿
+@{
+    ViewData["Title"] = "Page2";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+}
+
+<h1>Page2</h1>
+
+@section MyScripts {
+    <script>
+            alert("@(TempData["prompt"] ?? "Hello!")")
+    </script>
+}

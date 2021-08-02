@@ -168,7 +168,7 @@ namespace Lab_MVC_ToDo_HandMake.Models {
 
 
 3.5 繼續在套件管理器主控台輸入下列指令:
-    Update-Database
+ 
 
 
 3.4 在 SQL Server Management Studio 

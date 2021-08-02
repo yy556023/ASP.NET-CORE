@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    @RenderSection("MyStyle", required: false)
+</head>
+<body>
+    <div>
+        <a href="/Home/Lobby">Lobby</a>&nbsp;|&nbsp;
+        <a href="/Home/Page1">Page One</a>&nbsp;|&nbsp;
+        <a href="/Home/Page2">Page Two</a>
+        <hr />
+        @RenderBody()
+    </div>
+    @await RenderSectionAsync("MyScripts", required: false)
+</body>
+</html>
